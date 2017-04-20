@@ -87,7 +87,8 @@ func Open(ct, key []byte) (*Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	mt, err := c.Open(ct[:0], ct[:chacha20poly1305.NonceSize], ct[chacha20poly1305.NonceSize:], nil)
+	dst := make([]byte, 0, tokenPlaintextSize)
+	mt, err := c.Open(dst, ct[:chacha20poly1305.NonceSize], ct[chacha20poly1305.NonceSize:], nil)
 	if err != nil {
 		return nil, err
 	}
