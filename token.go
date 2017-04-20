@@ -17,13 +17,16 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
-const DefaultTokenLifetime = 30 * time.Second
-
 const (
 	KeySize                  = chacha20poly1305.KeySize
 	chacha20poly1305Overhead = 16
-	tokenPlaintextSize       = 8
-	TokenSize                = chacha20poly1305.NonceSize + tokenPlaintextSize + chacha20poly1305Overhead
+	TokenPlaintextSize       = 8
+	TokenSize                = chacha20poly1305.NonceSize + TokenPlaintextSize + chacha20poly1305Overhead
+)
+
+var (
+	TokenExpired     = errors.New("token expired")
+	InvalidTokenSize = errors.New("invalid token size")
 )
 
 type Token struct {
@@ -51,7 +54,7 @@ func Verify(t, key []byte) error {
 		return err
 	}
 	if !tt.IsValid() {
-		return errors.New("token is not valid")
+		return TokenExpired
 	}
 	return nil
 }
@@ -81,13 +84,13 @@ func (t *Token) Seal(key []byte) ([]byte, error) {
 func Open(ct, key []byte) (*Token, error) {
 	t := &Token{}
 	if len(ct) != TokenSize {
-		return nil, errors.New("invalid token size")
+		return nil, InvalidTokenSize
 	}
 	c, err := chacha20poly1305.New(key)
 	if err != nil {
 		return nil, err
 	}
-	dst := make([]byte, 0, tokenPlaintextSize)
+	dst := make([]byte, 0, TokenPlaintextSize)
 	mt, err := c.Open(dst, ct[:chacha20poly1305.NonceSize], ct[chacha20poly1305.NonceSize:], nil)
 	if err != nil {
 		return nil, err
