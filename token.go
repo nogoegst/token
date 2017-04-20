@@ -20,8 +20,7 @@ import (
 const (
 	KeySize                  = chacha20poly1305.KeySize
 	chacha20poly1305Overhead = 16
-	TokenPlaintextSize       = 8
-	TokenSize                = chacha20poly1305.NonceSize + TokenPlaintextSize + chacha20poly1305Overhead
+	Overhead                 = chacha20poly1305.NonceSize + chacha20poly1305Overhead
 )
 
 var (
@@ -31,6 +30,14 @@ var (
 
 type Token struct {
 	ExpirationTime int64
+}
+
+func (t *Token) PlaintextSize() int {
+	return 8
+}
+
+func (t *Token) CiphertextSize() int {
+	return t.PlaintextSize() + Overhead
 }
 
 func NewTokenWithTime(exp time.Time) *Token {
@@ -45,11 +52,15 @@ func NewTokenWithDuration(d time.Duration) *Token {
 
 func New(d time.Duration, key []byte) ([]byte, error) {
 	t := NewTokenWithDuration(d)
-	return t.Seal(key)
+	return Seal(*t, key)
 }
 
 func Verify(t, key []byte) error {
-	tt, err := Open(t, key)
+	tt := &Token{}
+	if len(t) != tt.CiphertextSize() {
+		return InvalidTokenSize
+	}
+	err := Open(t, key, tt)
 	if err != nil {
 		return err
 	}
@@ -63,8 +74,8 @@ func (t *Token) IsValid() bool {
 	return time.Now().Before(time.Unix(t.ExpirationTime, 0))
 }
 
-func (t *Token) Seal(key []byte) ([]byte, error) {
-	mt, err := asn1.Marshal(*t)
+func Seal(t interface{}, key []byte) ([]byte, error) {
+	mt, err := asn1.Marshal(t)
 	if err != nil {
 		return nil, err
 	}
@@ -81,23 +92,18 @@ func (t *Token) Seal(key []byte) ([]byte, error) {
 	return ct, nil
 }
 
-func Open(ct, key []byte) (*Token, error) {
-	t := &Token{}
-	if len(ct) != TokenSize {
-		return nil, InvalidTokenSize
-	}
+func Open(ct, key []byte, v interface{}) error {
 	c, err := chacha20poly1305.New(key)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	dst := make([]byte, 0, TokenPlaintextSize)
-	mt, err := c.Open(dst, ct[:chacha20poly1305.NonceSize], ct[chacha20poly1305.NonceSize:], nil)
+	mt, err := c.Open(nil, ct[:chacha20poly1305.NonceSize], ct[chacha20poly1305.NonceSize:], nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	_, err = asn1.Unmarshal(mt, t)
+	_, err = asn1.Unmarshal(mt, v)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return t, nil
+	return nil
 }
