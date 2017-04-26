@@ -69,7 +69,7 @@ func Verify(t, key []byte) (*Token, error) {
 		return nil, err
 	}
 	if !tt.IsValid() {
-		return nil, TokenExpired
+		return tt, TokenExpired
 	}
 	return tt, nil
 }
