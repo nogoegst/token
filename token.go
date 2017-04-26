@@ -59,19 +59,19 @@ func New(d time.Duration, key []byte) ([]byte, error) {
 	return Seal(*t, key)
 }
 
-func Verify(t, key []byte) error {
+func Verify(t, key []byte) (*Token, error) {
 	tt := &Token{}
 	if len(t) != tt.CiphertextSize() {
-		return InvalidTokenSize
+		return nil, InvalidTokenSize
 	}
 	err := Open(t, key, tt)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !tt.IsValid() {
-		return TokenExpired
+		return nil, TokenExpired
 	}
-	return nil
+	return tt, nil
 }
 
 func (t *Token) IsValid() bool {
