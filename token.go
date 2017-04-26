@@ -29,7 +29,7 @@ var (
 )
 
 type Token struct {
-	ExpirationTime int64
+	ExpirationTimestamp int64
 }
 
 func (t *Token) PlaintextSize() int {
@@ -40,9 +40,13 @@ func (t *Token) CiphertextSize() int {
 	return t.PlaintextSize() + Overhead
 }
 
+func (t *Token) ExpirationTime() time.Time {
+	return time.Unix(t.ExpirationTimestamp, 0)
+}
+
 func NewTokenWithTime(exp time.Time) *Token {
 	return &Token{
-		ExpirationTime: exp.Unix(),
+		ExpirationTimestamp: exp.Unix(),
 	}
 }
 
@@ -71,7 +75,7 @@ func Verify(t, key []byte) error {
 }
 
 func (t *Token) IsValid() bool {
-	return time.Now().Before(time.Unix(t.ExpirationTime, 0))
+	return time.Now().Before(t.ExpirationTime())
 }
 
 func Seal(t interface{}, key []byte) ([]byte, error) {
