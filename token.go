@@ -20,7 +20,8 @@ import (
 const (
 	KeySize                  = chacha20poly1305.KeySize
 	chacha20poly1305Overhead = 16
-	Overhead                 = chacha20poly1305.NonceSize + chacha20poly1305Overhead
+	MACOverhead              = chacha20poly1305Overhead
+	Overhead                 = chacha20poly1305.NonceSize + MACOverhead
 )
 
 var (
