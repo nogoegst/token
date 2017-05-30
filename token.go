@@ -45,14 +45,21 @@ func (t *Token) ExpirationTime() time.Time {
 	return time.Unix(t.ExpirationTimestamp, 0)
 }
 
-func NewWithTime(exp time.Time) *Token {
-	return &Token{
+func NewWithTime(exp time.Time, adata ...[]byte) *Token {
+	if len(adata) > 1 {
+		panic("additional data must be specified as most once")
+	}
+	t := &Token{
 		ExpirationTimestamp: exp.Unix(),
 	}
+	if len(adata) == 1 {
+		t.AdditionalData = adata[0]
+	}
+	return t
 }
 
-func NewWithDuration(d time.Duration) *Token {
-	return NewWithTime(time.Now().Add(d))
+func NewWithDuration(d time.Duration, adata ...[]byte) *Token {
+	return NewWithTime(time.Now().Add(d), adata...)
 }
 
 func Verify(t, key []byte) (*Token, error) {
