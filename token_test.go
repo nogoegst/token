@@ -1,4 +1,4 @@
-// token.go - simple secure expiring tokens.
+// token_test.go
 //
 // To the extent possible under law, Ivan Markin has waived all copyright
 // and related or neighboring rights to token, using the Creative

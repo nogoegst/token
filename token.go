@@ -1,8 +1,8 @@
 // token.go - simple secure expiring tokens.
 //
-// To the extent possible under law, Ivan Markin waived all copyright
-// and related or neighboring rights to this module of token, using the creative
-// commons "cc0" public domain dedication. See LICENSE or
+// To the extent possible under law, Ivan Markin has waived all copyright
+// and related or neighboring rights to token, using the Creative
+// Commons "CC0" public domain dedication. See LICENSE or
 // <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 
 package token
