@@ -24,12 +24,13 @@ const (
 )
 
 var (
-	TokenExpired     = errors.New("token expired")
-	InvalidTokenSize = errors.New("invalid token size")
+	ErrExpired     = errors.New("token expired")
+	ErrInvalidSize = errors.New("invalid token size")
 )
 
 type Token struct {
 	ExpirationTimestamp int64
+	AdditionalData      []byte
 }
 
 func (t *Token) PlaintextSize() int {
@@ -44,32 +45,23 @@ func (t *Token) ExpirationTime() time.Time {
 	return time.Unix(t.ExpirationTimestamp, 0)
 }
 
-func NewTokenWithTime(exp time.Time) *Token {
+func NewWithTime(exp time.Time) *Token {
 	return &Token{
 		ExpirationTimestamp: exp.Unix(),
 	}
 }
 
-func NewTokenWithDuration(d time.Duration) *Token {
-	return NewTokenWithTime(time.Now().Add(d))
-}
-
-func New(d time.Duration, key []byte) ([]byte, error) {
-	t := NewTokenWithDuration(d)
-	return Seal(*t, key)
+func NewWithDuration(d time.Duration) *Token {
+	return NewWithTime(time.Now().Add(d))
 }
 
 func Verify(t, key []byte) (*Token, error) {
-	tt := &Token{}
-	if len(t) != tt.CiphertextSize() {
-		return nil, InvalidTokenSize
-	}
-	err := Open(t, key, tt)
+	tt, err := Open(t, key)
 	if err != nil {
 		return nil, err
 	}
 	if !tt.IsValid() {
-		return tt, TokenExpired
+		return tt, ErrExpired
 	}
 	return tt, nil
 }
@@ -78,8 +70,8 @@ func (t *Token) IsValid() bool {
 	return time.Now().Before(t.ExpirationTime())
 }
 
-func Seal(t interface{}, key []byte) ([]byte, error) {
-	mt, err := asn1.Marshal(t)
+func (t *Token) Seal(key []byte) ([]byte, error) {
+	mt, err := asn1.Marshal(*t)
 	if err != nil {
 		return nil, err
 	}
@@ -96,18 +88,22 @@ func Seal(t interface{}, key []byte) ([]byte, error) {
 	return ct, nil
 }
 
-func Open(ct, key []byte, v interface{}) error {
+func Open(ct, key []byte) (*Token, error) {
 	c, err := chacha20poly1305.New(key)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	if len(ct) < chacha20poly1305.NonceSize {
+		return nil, ErrInvalidSize
 	}
 	mt, err := c.Open(nil, ct[:chacha20poly1305.NonceSize], ct[chacha20poly1305.NonceSize:], nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	v := &Token{}
 	_, err = asn1.Unmarshal(mt, v)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return v, nil
 }
