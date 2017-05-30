@@ -29,7 +29,7 @@ var (
 )
 
 type Token struct {
-	ExpirationTimestamp int64
+	ExpirationTimestamp int64 // in milliseconds
 	AdditionalData      []byte
 }
 
@@ -42,7 +42,9 @@ func (t *Token) CiphertextSize() int {
 }
 
 func (t *Token) ExpirationTime() time.Time {
-	return time.Unix(t.ExpirationTimestamp, 0)
+	msec := t.ExpirationTimestamp % 1e3
+	sec := (t.ExpirationTimestamp - msec) / 1e3
+	return time.Unix(sec, msec*1e6)
 }
 
 func NewWithTime(exp time.Time, adata ...[]byte) *Token {
@@ -50,7 +52,7 @@ func NewWithTime(exp time.Time, adata ...[]byte) *Token {
 		panic("additional data must be specified as most once")
 	}
 	t := &Token{
-		ExpirationTimestamp: exp.Unix(),
+		ExpirationTimestamp: exp.UnixNano() / 1e6,
 	}
 	if len(adata) == 1 {
 		t.AdditionalData = adata[0]
