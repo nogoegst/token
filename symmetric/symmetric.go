@@ -17,6 +17,8 @@ import (
 
 var (
 	ErrInvalidSize = errors.New("invalid ciphertext size")
+	ErrDecrypt     = errors.New("unable to decrypt token")
+	ErrUnmarshal   = errors.New("unable to unmarshal token")
 	Locker         = locker.NewSymmetric()
 	KeySize        = locker.KeySize
 )
@@ -49,11 +51,11 @@ func NewWithDuration(d time.Duration, key []byte, adata ...[]byte) ([]byte, erro
 func Verify(t, key []byte) (*token.Token, error) {
 	tt, err := Locker.Open(t, key)
 	if err != nil {
-		return nil, err
+		return nil, ErrDecrypt
 	}
 	tok, err := token.Unmarshal(tt)
 	if err != nil {
-		return nil, err
+		return nil, ErrUnmarshal
 	}
 	if err := tok.Verify(); err != nil {
 		return tok, err
