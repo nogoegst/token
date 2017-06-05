@@ -8,7 +8,7 @@
 package token
 
 import (
-	"encoding/asn1"
+	"encoding/binary"
 	"errors"
 	"time"
 )
@@ -53,14 +53,18 @@ func (t *Token) Verify() error {
 }
 
 func (t *Token) Marshal() ([]byte, error) {
-	return asn1.Marshal(*t)
+	ret := make([]byte, 8+len(t.Payload))
+	binary.BigEndian.PutUint64(ret[:8], uint64(t.ExpirationTimestamp))
+	copy(ret[8:], t.Payload)
+	return ret, nil
 }
 
 func Unmarshal(mt []byte) (*Token, error) {
-	t := &Token{}
-	_, err := asn1.Unmarshal(mt, t)
-	if err != nil {
-		return nil, err
+	if len(mt) < 8 {
+		return nil, errors.New("invalid data length")
 	}
+	t := &Token{}
+	t.ExpirationTimestamp = int64(binary.BigEndian.Uint64(mt[:8]))
+	t.Payload = mt[8:]
 	return t, nil
 }
