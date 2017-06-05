@@ -44,8 +44,8 @@ func TestCurrentToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(adata, tt.AdditionalData) {
-		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.AdditionalData)
+	if !reflect.DeepEqual(adata, tt.Payload) {
+		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.Payload)
 	}
 
 	bpk, bsk, err := Locker.GenerateKeypair(rand.Reader)
@@ -64,7 +64,7 @@ func TestCurrentToken(t *testing.T) {
 		log.Printf("%v", tt.ExpirationTime())
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(adata, tt.AdditionalData) {
-		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.AdditionalData)
+	if !reflect.DeepEqual(adata, tt.Payload) {
+		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.Payload)
 	}
 }

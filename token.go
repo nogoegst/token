@@ -19,7 +19,7 @@ var (
 
 type Token struct {
 	ExpirationTimestamp int64 // in milliseconds
-	AdditionalData      []byte
+	Payload             []byte
 }
 
 func (t *Token) ExpirationTime() time.Time {
@@ -28,21 +28,21 @@ func (t *Token) ExpirationTime() time.Time {
 	return time.Unix(sec, msec*1e6)
 }
 
-func NewWithTime(exp time.Time, adata ...[]byte) (*Token, error) {
-	if len(adata) > 1 {
+func NewWithTime(exp time.Time, payload ...[]byte) (*Token, error) {
+	if len(payload) > 1 {
 		return nil, errors.New("additional data must be specified as most once")
 	}
 	t := &Token{
 		ExpirationTimestamp: exp.UnixNano() / 1e6,
 	}
-	if len(adata) == 1 {
-		t.AdditionalData = adata[0]
+	if len(payload) == 1 {
+		t.Payload = payload[0]
 	}
 	return t, nil
 }
 
-func NewWithDuration(d time.Duration, adata ...[]byte) (*Token, error) {
-	return NewWithTime(time.Now().Add(d), adata...)
+func NewWithDuration(d time.Duration, payload ...[]byte) (*Token, error) {
+	return NewWithTime(time.Now().Add(d), payload...)
 }
 
 func (t *Token) Verify() error {

@@ -38,8 +38,8 @@ func TestCurrentToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(adata, tt.AdditionalData) {
-		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.AdditionalData)
+	if !reflect.DeepEqual(adata, tt.Payload) {
+		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.Payload)
 	}
 
 	time.Sleep(150 * time.Millisecond)
@@ -48,7 +48,7 @@ func TestCurrentToken(t *testing.T) {
 		log.Printf("%v", tt.ExpirationTime())
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(adata, tt.AdditionalData) {
-		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.AdditionalData)
+	if !reflect.DeepEqual(adata, tt.Payload) {
+		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.Payload)
 	}
 }
