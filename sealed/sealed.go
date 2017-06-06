@@ -1,11 +1,11 @@
-// symmetric.go - simple secure expiring tokens with symmetric keys.
+// sealed.go - sealing wrappers for tokens.
 //
 // To the extent possible under law, Ivan Markin has waived all copyright
 // and related or neighboring rights to token, using the Creative
 // Commons "CC0" public domain dedication. See LICENSE or
 // <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 
-package symmetrictoken
+package sealedtoken
 
 import (
 	"errors"
@@ -16,11 +16,26 @@ import (
 )
 
 var (
-	ErrInvalidSize = errors.New("invalid ciphertext size")
-	ErrDecrypt     = errors.New("unable to decrypt token")
-	ErrUnmarshal   = errors.New("unable to unmarshal token")
-	Locker         = locker.Symmetric
+	ErrDecrypt   = errors.New("unable to decrypt token")
+	ErrUnmarshal = errors.New("unable to unmarshal token")
+	Locker       = locker.SealOpener(locker.Symmetric)
 )
+
+func NewWithTime(d time.Time, key []byte, payload ...[]byte) ([]byte, error) {
+	t, err := token.NewWithTime(d, payload...)
+	if err != nil {
+		return nil, err
+	}
+	return Seal(t, key)
+}
+
+func NewWithDuration(d time.Duration, key []byte, payload ...[]byte) ([]byte, error) {
+	t, err := token.NewWithDuration(d, payload...)
+	if err != nil {
+		return nil, err
+	}
+	return Seal(t, key)
+}
 
 func Seal(t *token.Token, key []byte) ([]byte, error) {
 	pt, err := t.Marshal()
@@ -29,22 +44,6 @@ func Seal(t *token.Token, key []byte) ([]byte, error) {
 	}
 	ct, err := Locker.Seal(pt, key)
 	return ct, err
-}
-
-func NewWithTime(d time.Time, key []byte, adata ...[]byte) ([]byte, error) {
-	t, err := token.NewWithTime(d, adata...)
-	if err != nil {
-		return nil, err
-	}
-	return Seal(t, key)
-}
-
-func NewWithDuration(d time.Duration, key []byte, adata ...[]byte) ([]byte, error) {
-	t, err := token.NewWithDuration(d, adata...)
-	if err != nil {
-		return nil, err
-	}
-	return Seal(t, key)
 }
 
 func Verify(t, key []byte) (*token.Token, error) {
