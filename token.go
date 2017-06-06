@@ -16,8 +16,7 @@ import (
 )
 
 var (
-	ErrDecrypt   = errors.New("unable to decrypt token")
-	ErrUnmarshal = errors.New("unable to unmarshal token")
+	ErrDecode = errors.New("unable to decode token")
 )
 
 func NewWithTime(l locker.Sealer, key []byte, d time.Time, payload ...[]byte) ([]byte, error) {
@@ -48,11 +47,11 @@ func Seal(sr locker.Sealer, key []byte, t *plaintoken.Token) ([]byte, error) {
 func Verify(or locker.Opener, key, t []byte) (*plaintoken.Token, error) {
 	tt, err := or.Open(t, key)
 	if err != nil {
-		return nil, ErrDecrypt
+		return nil, ErrDecode
 	}
 	tok, err := plaintoken.Unmarshal(tt)
 	if err != nil {
-		return nil, ErrUnmarshal
+		return nil, ErrDecode
 	}
 	if err := tok.Verify(); err != nil {
 		return tok, err
