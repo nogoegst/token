@@ -17,54 +17,46 @@ import (
 )
 
 func TestCurrentToken(t *testing.T) {
-	spk, ssk, err := Locker.GenerateKeypair(rand.Reader)
+	pk, sk, err := Locker.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	pk, sk, err := Locker.GenerateKeypair(rand.Reader)
-	if err != nil {
-		t.Fatal(err)
-	}
-	sourcekey := append(ssk, pk...)
-	key := append(sk, spk...)
-
-	adata := make([]byte, 32)
-	_, err = io.ReadFull(rand.Reader, adata)
+	payload := make([]byte, 32)
+	_, err = io.ReadFull(rand.Reader, payload)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	tok, err := NewWithDuration(100*time.Millisecond, sourcekey, adata)
+	tok, err := NewWithDuration(100*time.Millisecond, sk, payload)
 	if err != nil {
 		t.Fatal(err)
 	}
 	log.Printf("%x", tok)
 	time.Sleep(50 * time.Millisecond)
-	tt, err := Verify(tok, key)
+	tt, err := Verify(tok, pk)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(adata, tt.Payload) {
-		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.Payload)
+	if !reflect.DeepEqual(payload, tt.Payload) {
+		t.Fatalf("wrong additional data: want %x, got %x", payload, tt.Payload)
 	}
 
-	bpk, bsk, err := Locker.GenerateKeypair(rand.Reader)
+	badpk, _, err := Locker.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	badkey := append(bsk, bpk...)
-	_, err = Verify(tok, badkey)
+	_, err = Verify(tok, badpk)
 	if err == nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(150 * time.Millisecond)
-	tt, err = Verify(tok, key)
+	tt, err = Verify(tok, pk)
 	if err == nil {
 		log.Printf("%v", tt.ExpirationTime())
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(adata, tt.Payload) {
-		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.Payload)
+	if !reflect.DeepEqual(payload, tt.Payload) {
+		t.Fatalf("wrong additional data: want %x, got %x", payload, tt.Payload)
 	}
 }

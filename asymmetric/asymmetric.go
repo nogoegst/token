@@ -16,11 +16,10 @@ import (
 )
 
 var (
-	ErrInvalidSize = errors.New("invalid ciphertext size")
-	ErrDecrypt     = errors.New("unable to decrypt token")
-	ErrUnmarshal   = errors.New("unable to unmarshal token")
-	Locker         = locker.NewAsymmetric()
-	KeySize        = locker.KeySize
+	ErrDecrypt   = errors.New("unable to decrypt token")
+	ErrUnmarshal = errors.New("unable to unmarshal token")
+	Locker       = locker.NewScrambleSigned()
+	KeySize      = locker.KeySize
 )
 
 func NewWithTime(d time.Time, key []byte, adata ...[]byte) ([]byte, error) {
