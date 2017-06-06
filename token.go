@@ -20,7 +20,7 @@ var (
 	ErrUnmarshal = errors.New("unable to unmarshal token")
 )
 
-func NewWithTime(l locker.SealOpener, key []byte, d time.Time, payload ...[]byte) ([]byte, error) {
+func NewWithTime(l locker.Sealer, key []byte, d time.Time, payload ...[]byte) ([]byte, error) {
 	t, err := plaintoken.NewWithTime(d, payload...)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func NewWithTime(l locker.SealOpener, key []byte, d time.Time, payload ...[]byte
 	return Seal(l, key, t)
 }
 
-func NewWithDuration(l locker.SealOpener, key []byte, d time.Duration, payload ...[]byte) ([]byte, error) {
+func NewWithDuration(l locker.Sealer, key []byte, d time.Duration, payload ...[]byte) ([]byte, error) {
 	t, err := plaintoken.NewWithDuration(d, payload...)
 	if err != nil {
 		return nil, err
