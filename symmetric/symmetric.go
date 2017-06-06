@@ -20,7 +20,6 @@ var (
 	ErrDecrypt     = errors.New("unable to decrypt token")
 	ErrUnmarshal   = errors.New("unable to unmarshal token")
 	Locker         = locker.Symmetric
-	KeySize        = locker.KeySize
 )
 
 func seal(t *token.Token, key []byte) ([]byte, error) {

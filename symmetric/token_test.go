@@ -17,18 +17,17 @@ import (
 )
 
 func TestCurrentToken(t *testing.T) {
-	key := make([]byte, KeySize)
-	_, err := io.ReadFull(rand.Reader, key)
+	key, _, err := Locker.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	adata := make([]byte, 32)
-	_, err = io.ReadFull(rand.Reader, adata)
+	payload := make([]byte, 32)
+	_, err = io.ReadFull(rand.Reader, payload)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	tok, err := NewWithDuration(100*time.Millisecond, key, adata)
+	tok, err := NewWithDuration(100*time.Millisecond, key, payload)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,8 +37,8 @@ func TestCurrentToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(adata, tt.Payload) {
-		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.Payload)
+	if !reflect.DeepEqual(payload, tt.Payload) {
+		t.Fatalf("wrong additional data: want %x, got %x", payload, tt.Payload)
 	}
 
 	time.Sleep(150 * time.Millisecond)
@@ -48,7 +47,7 @@ func TestCurrentToken(t *testing.T) {
 		log.Printf("%v", tt.ExpirationTime())
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(adata, tt.Payload) {
-		t.Fatalf("wrong additional data: want %x, got %x", adata, tt.Payload)
+	if !reflect.DeepEqual(payload, tt.Payload) {
+		t.Fatalf("wrong additional data: want %x, got %x", payload, tt.Payload)
 	}
 }
