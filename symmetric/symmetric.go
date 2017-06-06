@@ -22,7 +22,7 @@ var (
 	Locker         = locker.Symmetric
 )
 
-func seal(t *token.Token, key []byte) ([]byte, error) {
+func Seal(t *token.Token, key []byte) ([]byte, error) {
 	pt, err := t.Marshal()
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func NewWithTime(d time.Time, key []byte, adata ...[]byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return seal(t, key)
+	return Seal(t, key)
 }
 
 func NewWithDuration(d time.Duration, key []byte, adata ...[]byte) ([]byte, error) {
@@ -44,7 +44,7 @@ func NewWithDuration(d time.Duration, key []byte, adata ...[]byte) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
-	return seal(t, key)
+	return Seal(t, key)
 }
 
 func Verify(t, key []byte) (*token.Token, error) {
