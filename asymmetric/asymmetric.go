@@ -18,7 +18,7 @@ import (
 var (
 	ErrDecrypt   = errors.New("unable to decrypt token")
 	ErrUnmarshal = errors.New("unable to unmarshal token")
-	Locker       = locker.NewScrambleSigned()
+	Locker       = locker.ScrambleSigned
 	KeySize      = locker.KeySize
 )
 

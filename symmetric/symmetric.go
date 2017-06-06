@@ -19,7 +19,7 @@ var (
 	ErrInvalidSize = errors.New("invalid ciphertext size")
 	ErrDecrypt     = errors.New("unable to decrypt token")
 	ErrUnmarshal   = errors.New("unable to unmarshal token")
-	Locker         = locker.NewSymmetric()
+	Locker         = locker.Symmetric
 	KeySize        = locker.KeySize
 )
 
