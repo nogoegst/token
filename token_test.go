@@ -19,8 +19,7 @@ import (
 )
 
 func TestSymmetricToken(t *testing.T) {
-	Locker = locker.Symmetric
-	key, _, err := Locker.GenerateKey(rand.Reader)
+	key, _, err := locker.Symmetric.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,13 +29,13 @@ func TestSymmetricToken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tok, err := NewWithDuration(100*time.Millisecond, key, payload)
+	tok, err := NewWithDuration(locker.Symmetric, key, 100*time.Millisecond, payload)
 	if err != nil {
 		t.Fatal(err)
 	}
 	log.Printf("%x", tok)
 	time.Sleep(50 * time.Millisecond)
-	tt, err := Verify(tok, key)
+	tt, err := Verify(locker.Symmetric, key, tok)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +44,7 @@ func TestSymmetricToken(t *testing.T) {
 	}
 
 	time.Sleep(150 * time.Millisecond)
-	tt, err = Verify(tok, key)
+	tt, err = Verify(locker.Symmetric, key, tok)
 	if err == nil {
 		log.Printf("%v", tt.ExpirationTime())
 		t.Fatal(err)
@@ -56,8 +55,7 @@ func TestSymmetricToken(t *testing.T) {
 }
 
 func TestScrambleSignedToken(t *testing.T) {
-	Locker = locker.ScrambleSigned
-	pk, sk, err := Locker.GenerateKey(rand.Reader)
+	pk, sk, err := locker.ScrambleSigned.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,13 +65,13 @@ func TestScrambleSignedToken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tok, err := NewWithDuration(100*time.Millisecond, sk, payload)
+	tok, err := NewWithDuration(locker.ScrambleSigned, sk, 100*time.Millisecond, payload)
 	if err != nil {
 		t.Fatal(err)
 	}
 	log.Printf("%x", tok)
 	time.Sleep(50 * time.Millisecond)
-	tt, err := Verify(tok, pk)
+	tt, err := Verify(locker.ScrambleSigned, pk, tok)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,17 +79,17 @@ func TestScrambleSignedToken(t *testing.T) {
 		t.Fatalf("wrong additional data: want %x, got %x", payload, tt.Payload)
 	}
 
-	badpk, _, err := Locker.GenerateKey(rand.Reader)
+	badpk, _, err := locker.ScrambleSigned.GenerateKey(rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = Verify(tok, badpk)
+	_, err = Verify(locker.ScrambleSigned, badpk, tok)
 	if err == nil {
 		t.Fatal(err)
 	}
 
 	time.Sleep(150 * time.Millisecond)
-	tt, err = Verify(tok, pk)
+	tt, err = Verify(locker.ScrambleSigned, pk, tok)
 	if err == nil {
 		log.Printf("%v", tt.ExpirationTime())
 		t.Fatal(err)

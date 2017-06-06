@@ -18,36 +18,35 @@ import (
 var (
 	ErrDecrypt   = errors.New("unable to decrypt token")
 	ErrUnmarshal = errors.New("unable to unmarshal token")
-	Locker       = locker.SealOpener(locker.Symmetric)
 )
 
-func NewWithTime(d time.Time, key []byte, payload ...[]byte) ([]byte, error) {
+func NewWithTime(l locker.SealOpener, key []byte, d time.Time, payload ...[]byte) ([]byte, error) {
 	t, err := plaintoken.NewWithTime(d, payload...)
 	if err != nil {
 		return nil, err
 	}
-	return Seal(t, key)
+	return Seal(l, key, t)
 }
 
-func NewWithDuration(d time.Duration, key []byte, payload ...[]byte) ([]byte, error) {
+func NewWithDuration(l locker.SealOpener, key []byte, d time.Duration, payload ...[]byte) ([]byte, error) {
 	t, err := plaintoken.NewWithDuration(d, payload...)
 	if err != nil {
 		return nil, err
 	}
-	return Seal(t, key)
+	return Seal(l, key, t)
 }
 
-func Seal(t *plaintoken.Token, key []byte) ([]byte, error) {
+func Seal(sr locker.Sealer, key []byte, t *plaintoken.Token) ([]byte, error) {
 	pt, err := t.Marshal()
 	if err != nil {
 		return nil, err
 	}
-	ct, err := Locker.Seal(pt, key)
+	ct, err := sr.Seal(pt, key)
 	return ct, err
 }
 
-func Verify(t, key []byte) (*plaintoken.Token, error) {
-	tt, err := Locker.Open(t, key)
+func Verify(or locker.Opener, key, t []byte) (*plaintoken.Token, error) {
+	tt, err := or.Open(t, key)
 	if err != nil {
 		return nil, ErrDecrypt
 	}
