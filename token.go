@@ -8,63 +8,55 @@
 package token
 
 import (
-	"encoding/binary"
 	"errors"
 	"time"
+
+	"github.com/nogoegst/locker"
+	"github.com/nogoegst/token/plain"
 )
 
 var (
-	ErrExpired = errors.New("token expired")
+	ErrDecrypt   = errors.New("unable to decrypt token")
+	ErrUnmarshal = errors.New("unable to unmarshal token")
+	Locker       = locker.SealOpener(locker.Symmetric)
 )
 
-type Token struct {
-	ExpirationTimestamp int64 // in milliseconds
-	Payload             []byte
-}
-
-func (t *Token) ExpirationTime() time.Time {
-	msec := t.ExpirationTimestamp % 1e3
-	sec := (t.ExpirationTimestamp - msec) / 1e3
-	return time.Unix(sec, msec*1e6)
-}
-
-func NewWithTime(exp time.Time, payload ...[]byte) (*Token, error) {
-	if len(payload) > 1 {
-		return nil, errors.New("additional data must be specified as most once")
+func NewWithTime(d time.Time, key []byte, payload ...[]byte) ([]byte, error) {
+	t, err := plaintoken.NewWithTime(d, payload...)
+	if err != nil {
+		return nil, err
 	}
-	t := &Token{
-		ExpirationTimestamp: exp.UnixNano() / 1e6,
-	}
-	if len(payload) == 1 {
-		t.Payload = payload[0]
-	}
-	return t, nil
+	return Seal(t, key)
 }
 
-func NewWithDuration(d time.Duration, payload ...[]byte) (*Token, error) {
-	return NewWithTime(time.Now().Add(d), payload...)
-}
-
-func (t *Token) Verify() error {
-	if !time.Now().Before(t.ExpirationTime()) {
-		return ErrExpired
+func NewWithDuration(d time.Duration, key []byte, payload ...[]byte) ([]byte, error) {
+	t, err := plaintoken.NewWithDuration(d, payload...)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	return Seal(t, key)
 }
 
-func (t *Token) Marshal() ([]byte, error) {
-	ret := make([]byte, 8+len(t.Payload))
-	binary.BigEndian.PutUint64(ret[:8], uint64(t.ExpirationTimestamp))
-	copy(ret[8:], t.Payload)
-	return ret, nil
-}
-
-func Unmarshal(mt []byte) (*Token, error) {
-	if len(mt) < 8 {
-		return nil, errors.New("invalid data length")
+func Seal(t *plaintoken.Token, key []byte) ([]byte, error) {
+	pt, err := t.Marshal()
+	if err != nil {
+		return nil, err
 	}
-	t := &Token{}
-	t.ExpirationTimestamp = int64(binary.BigEndian.Uint64(mt[:8]))
-	t.Payload = mt[8:]
-	return t, nil
+	ct, err := Locker.Seal(pt, key)
+	return ct, err
+}
+
+func Verify(t, key []byte) (*plaintoken.Token, error) {
+	tt, err := Locker.Open(t, key)
+	if err != nil {
+		return nil, ErrDecrypt
+	}
+	tok, err := plaintoken.Unmarshal(tt)
+	if err != nil {
+		return nil, ErrUnmarshal
+	}
+	if err := tok.Verify(); err != nil {
+		return tok, err
+	}
+	return tok, nil
 }
