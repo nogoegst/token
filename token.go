@@ -19,33 +19,33 @@ var (
 	ErrDecode = errors.New("unable to decode token")
 )
 
-func NewWithTime(l locker.Sealer, key []byte, d time.Time, payload ...[]byte) ([]byte, error) {
-	t, err := plaintoken.NewWithTime(d, payload...)
+func NewWithTime(l locker.Sealer, key []byte, d time.Time, payload, adata []byte) ([]byte, error) {
+	t, err := plaintoken.NewWithTime(d, payload)
 	if err != nil {
 		return nil, err
 	}
-	return Seal(l, key, t)
+	return Seal(l, key, t, adata)
 }
 
-func NewWithDuration(l locker.Sealer, key []byte, d time.Duration, payload ...[]byte) ([]byte, error) {
-	t, err := plaintoken.NewWithDuration(d, payload...)
+func NewWithDuration(l locker.Sealer, key []byte, d time.Duration, payload, adata []byte) ([]byte, error) {
+	t, err := plaintoken.NewWithDuration(d, payload)
 	if err != nil {
 		return nil, err
 	}
-	return Seal(l, key, t)
+	return Seal(l, key, t, adata)
 }
 
-func Seal(sr locker.Sealer, key []byte, t *plaintoken.Token) ([]byte, error) {
+func Seal(sr locker.Sealer, key []byte, t *plaintoken.Token, adata []byte) ([]byte, error) {
 	pt, err := t.Marshal()
 	if err != nil {
 		return nil, err
 	}
-	ct, err := sr.Seal(pt, key)
+	ct, err := sr.Seal(key, pt, adata)
 	return ct, err
 }
 
-func Verify(or locker.Opener, key, t []byte) (*plaintoken.Token, error) {
-	tt, err := or.Open(t, key)
+func Verify(or locker.Opener, key, t, adata []byte) (*plaintoken.Token, error) {
+	tt, err := or.Open(key, t, adata)
 	if err != nil {
 		return nil, ErrDecode
 	}
